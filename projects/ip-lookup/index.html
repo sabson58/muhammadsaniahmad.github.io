@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>IP Lookup – Muhammad Sani Ahmad</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui;background:#f8f6f1;color:#0f172a;min-height:100vh}
+body.dark{background:#020617;color:#f8fafc}
+nav{display:flex;justify-content:space-between;align-items:center;padding:1rem 2rem;background:#0f172a;color:#f8f6f1}
+.nav-back{color:#c9a96e;text-decoration:none;font-size:13px;letter-spacing:0.05em}
+.nav-back:hover{text-decoration:underline}
+.nav-logo{font-weight:600;font-size:1rem}
+.theme-toggle{background:none;border:1px solid rgba(255,255,255,0.2);color:#f8f6f1;padding:4px 12px;border-radius:20px;cursor:pointer;font-size:12px}
+.wrap{max-width:560px;margin:2rem auto;padding:0 1rem}
+.hero{background:#fff;border:1px solid #e5e0d5;border-radius:16px;padding:1.5rem;margin-bottom:1rem}
+body.dark .hero{background:#0f172a;border-color:#1f2937}
+.hero-title{font-size:18px;font-weight:600;margin-bottom:0.25rem}
+.hero-sub{font-size:13px;color:#64748b;margin-bottom:1.25rem}
+.search-row{display:flex;gap:8px}
+.search-row input{flex:1;padding:10px 12px;border:1px solid #e5e0d5;border-radius:8px;font-size:14px;font-family:monospace;outline:none;transition:border 0.2s;background:#fff;color:#0f172a}
+body.dark .search-row input{background:#020617;border-color:#1f2937;color:#f8fafc}
+.search-row input:focus{border-color:#c9a96e}
+.search-btn{padding:0 1.25rem;background:#0f172a;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;transition:opacity 0.15s;white-space:nowrap}
+.search-btn:hover{opacity:0.85}
+.search-btn:disabled{opacity:0.4;cursor:not-allowed}
+.my-ip{font-size:12px;color:#94a3b8;margin-top:0.6rem}
+.my-ip span{color:#c9a96e;font-family:monospace;cursor:pointer;text-decoration:underline;text-underline-offset:2px;font-weight:500}
+.my-ip span:hover{opacity:0.8}
+.error{color:#ef4444;background:#fee2e2;border-radius:8px;padding:0.75rem 1rem;font-size:13px;margin-top:0.75rem}
+.hidden{display:none}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.result{background:#fff;border:1px solid #e5e0d5;border-radius:16px;overflow:hidden;margin-bottom:1rem}
+body.dark .result{background:#0f172a;border-color:#1f2937}
+.result-header{background:#0f172a;padding:1.25rem;display:flex;align-items:center;gap:14px}
+.flag{font-size:2.2rem;line-height:1}
+.ip-badge{font-family:monospace;font-size:20px;font-weight:600;color:#fff}
+.ip-loc{font-size:13px;color:rgba(255,255,255,0.6);margin-top:3px}
+.result-grid{display:grid;grid-template-columns:1fr 1fr}
+.result-item{padding:0.9rem 1.25rem;border-bottom:1px solid #e5e0d5;border-right:1px solid #e5e0d5}
+body.dark .result-item{border-color:#1f2937}
+.result-item:nth-child(even){border-right:none}
+.result-item:nth-last-child(-n+2){border-bottom:none}
+.item-label{font-size:11px;color:#94a3b8;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:4px}
+.item-value{font-size:14px;font-weight:500;color:#0f172a}
+body.dark .item-value{color:#f8fafc}
+.badges{display:flex;gap:8px;padding:1rem 1.25rem;border-top:1px solid #e5e0d5;flex-wrap:wrap}
+body.dark .badges{border-color:#1f2937}
+.badge{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500}
+.badge.safe{background:#dcfce7;color:#166534}
+.badge.warn{background:#fef9c3;color:#854d0e}
+.badge.danger{background:#fee2e2;color:#991b1b}
+.map-card{background:#fff;border:1px solid #e5e0d5;border-radius:16px;overflow:hidden;margin-bottom:1rem}
+body.dark .map-card{background:#0f172a;border-color:#1f2937}
+.map-inner{height:160px;background:linear-gradient(135deg,#1e293b,#0f172a);display:flex;align-items:center;justify-content:center;position:relative}
+.map-grid{position:absolute;inset:0;opacity:0.08;background-image:linear-gradient(rgba(255,255,255,0.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.5) 1px,transparent 1px);background-size:28px 28px}
+.pin-wrap{text-align:center;position:relative;z-index:1}
+.pin-circle{width:16px;height:16px;background:#c9a96e;border-radius:50%;margin:0 auto;box-shadow:0 0 0 5px rgba(201,169,110,0.25)}
+.pin-line{width:2px;height:22px;background:#c9a96e;margin:0 auto}
+.pin-base{width:8px;height:3px;background:rgba(201,169,110,0.35);border-radius:50%;margin:0 auto}
+.map-label{color:rgba(255,255,255,0.65);font-size:12px;margin-top:10px;letter-spacing:0.04em}
+.coords{padding:0.75rem 1.25rem;font-family:monospace;font-size:12px;color:#64748b;border-top:1px solid #e5e0d5;display:flex;justify-content:space-between;align-items:center}
+body.dark .coords{border-color:#1f2937}
+.open-map{font-size:12px;color:#c9a96e;text-decoration:none;font-weight:500}
+.open-map:hover{text-decoration:underline}
+.history-card{background:#fff;border:1px solid #e5e0d5;border-radius:16px;padding:1.25rem}
+body.dark .history-card{background:#0f172a;border-color:#1f2937}
+.history-title{font-size:14px;font-weight:600;margin-bottom:0.75rem;display:flex;justify-content:space-between;align-items:center}
+.clear-btn{font-size:11px;color:#94a3b8;cursor:pointer;background:none;border:none}
+.clear-btn:hover{color:#ef4444}
+.history-list{display:flex;flex-direction:column;gap:6px}
+.history-item{display:flex;align-items:center;gap:10px;padding:0.6rem 0.85rem;background:#f8f6f1;border-radius:8px;cursor:pointer;transition:background 0.15s}
+body.dark .history-item{background:#1e293b}
+.history-item:hover{background:#e5e0d5}
+body.dark .history-item:hover{background:#334155}
+.h-flag{font-size:1.2rem}
+.h-ip{font-family:monospace;font-size:13px;font-weight:500;flex:1;color:#0f172a}
+body.dark .h-ip{color:#f8fafc}
+.h-loc{font-size:12px;color:#64748b}
+.api-note{font-size:11px;color:#94a3b8;text-align:center;margin-top:0.5rem}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="../../index.html" class="nav-back">← Back to portfolio</a>
+  <span class="nav-logo">IP Lookup</span>
+  <button class="theme-toggle" onclick="toggleTheme()">🌙 Dark</button>
+</nav>
+
+<div class="wrap">
+  <div class="hero">
+    <p class="hero-title">IP Address Lookup</p>
+    <p class="hero-sub">Enter any IP address to get location, ISP, and network details in real time.</p>
+    <div class="search-row">
+      <input type="text" id="ipInput" placeholder="e.g. 8.8.8.8" />
+      <button class="search-btn" id="lookupBtn" onclick="lookup()">Look up</button>
+    </div>
+    <p class="my-ip">Your IP: <span id="myIp" onclick="useMyIp()">detecting...</span></p>
+    <div class="error hidden" id="errMsg"></div>
+  </div>
+
+  <div id="resultSection" class="hidden">
+    <div class="result">
+      <div class="result-header">
+        <div class="flag" id="resFlag">🌐</div>
+        <div>
+          <div class="ip-badge" id="resIp"></div>
+          <div class="ip-loc" id="resLoc"></div>
+        </div>
+      </div>
+      <div class="result-grid">
+        <div class="result-item"><div class="item-label">Country</div><div class="item-value" id="resCountry"></div></div>
+        <div class="result-item"><div class="item-label">Region</div><div class="item-value" id="resRegion"></div></div>
+        <div class="result-item"><div class="item-label">City</div><div class="item-value" id="resCity"></div></div>
+        <div class="result-item"><div class="item-label">Timezone</div><div class="item-value" id="resTimezone"></div></div>
+        <div class="result-item"><div class="item-label">IP Version</div><div class="item-value" id="resIpv"></div></div>
+        <div class="result-item"><div class="item-label">Proxy / VPN</div><div class="item-value" id="resProxy"></div></div>
+      </div>
+      <div class="badges" id="resBadges"></div>
+    </div>
+
+    <div class="map-card">
+      <div class="map-inner">
+        <div class="map-grid"></div>
+        <div class="pin-wrap">
+          <div class="pin-circle"></div>
+          <div class="pin-line"></div>
+          <div class="pin-base"></div>
+          <div class="map-label" id="mapLabel">Locating...</div>
+        </div>
+      </div>
+      <div class="coords">
+        <span id="resCoords">—</span>
+        <a id="mapsLink" class="open-map" href="#" target="_blank">Open in Google Maps →</a>
+      </div>
+    </div>
+  </div>
+
+  <div id="historySection" class="hidden">
+    <div class="history-card">
+      <div class="history-title">
+        Recent lookups
+        <button class="clear-btn" onclick="clearHistory()">Clear all</button>
+      </div>
+      <div class="history-list" id="historyList"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let history = JSON.parse(localStorage.getItem('msa_ip_history') || '[]');
+let myIpVal = '';
+
+if(localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
+function toggleTheme(){
+  document.body.classList.toggle('dark');
+  localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+}
+
+function flag(code){
+  if(!code || code.length !== 2) return '🌐';
+  try{ return code.toUpperCase().replace(/./g, c => String.fromCodePoint(c.charCodeAt(0) + 127397)); }
+  catch(e){ return '🌐'; }
+}
+
+// Try multiple APIs in order until one works
+async function fetchIPData(ip){
+  const apis = [
+    // API 1: ip-api.com (very reliable, works globally)
+    async () => {
+      const r = await fetch(`https://ip-api.com/json/${ip}?fields=status,message,country,countryCode,regionName,city,timezone,isp,org,as,proxy,hosting,lat,lon,query`);
+      const d = await r.json();
+      if(d.status !== 'success') throw new Error(d.message || 'Failed');
+      return {
+        ip: d.query, country: d.country, countryCode: d.countryCode,
+        region: d.regionName, city: d.city, timezone: d.timezone,
+        isp: d.isp, org: d.org, isProxy: d.proxy || d.hosting,
+        ipVersion: d.query.includes(':') ? 6 : 4,
+        lat: d.lat, lon: d.lon
+      };
+    },
+    // API 2: ipwho.is (backup)
+    async () => {
+      const r = await fetch(`https://ipwho.is/${ip}`);
+      const d = await r.json();
+      if(!d.success) throw new Error('Failed');
+      return {
+        ip: d.ip, country: d.country, countryCode: d.country_code,
+        region: d.region, city: d.city, timezone: d.timezone?.id,
+        isp: d.connection?.isp, org: d.org, isProxy: false,
+        ipVersion: d.type === 'IPv6' ? 6 : 4,
+        lat: d.latitude, lon: d.longitude
+      };
+    }
+  ];
+
+  for(const api of apis){
+    try{ return await api(); } catch(e){ continue; }
+  }
+  throw new Error('All APIs failed');
+}
+
+async function getMyIp(){
+  try{
+    const r = await fetch('https://api.ipify.org?format=json');
+    const d = await r.json();
+    myIpVal = d.ip;
+    document.getElementById('myIp').textContent = d.ip;
+  } catch(e){
+    document.getElementById('myIp').textContent = 'unavailable';
+  }
+}
+
+function useMyIp(){
+  if(myIpVal){ document.getElementById('ipInput').value = myIpVal; lookup(); }
+}
+
+async function lookup(){
+  const ip = document.getElementById('ipInput').value.trim();
+  if(!ip) return;
+  const btn = document.getElementById('lookupBtn');
+  const err = document.getElementById('errMsg');
+  err.classList.add('hidden');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Looking up...';
+  document.getElementById('resultSection').classList.add('hidden');
+
+  try{
+    const d = await fetchIPData(ip);
+    const countryFlag = flag(d.countryCode);
+
+    document.getElementById('resFlag').textContent = countryFlag;
+    document.getElementById('resIp').textContent = d.ip || ip;
+    document.getElementById('resLoc').textContent = `${d.city || '—'}, ${d.country || '—'}`;
+    document.getElementById('resCountry').textContent = `${countryFlag} ${d.country || '—'}`;
+    document.getElementById('resRegion').textContent = d.region || '—';
+    document.getElementById('resCity').textContent = d.city || '—';
+    document.getElementById('resTimezone').textContent = d.timezone || '—';
+    document.getElementById('resIpv').textContent = `IPv${d.ipVersion || 4}`;
+    document.getElementById('resProxy').textContent = d.isProxy ? '⚠️ Yes' : '✅ No';
+
+    const badges = [];
+    if(d.isProxy) badges.push('<span class="badge danger">⚠️ Proxy / VPN</span>');
+    else badges.push('<span class="badge safe">✅ No Proxy</span>');
+    badges.push(`<span class="badge ${d.ipVersion === 6 ? 'warn' : 'safe'}">IPv${d.ipVersion || 4}</span>`);
+    document.getElementById('resBadges').innerHTML = badges.join('');
+
+    if(d.lat && d.lon){
+      document.getElementById('resCoords').textContent = `${Number(d.lat).toFixed(4)}, ${Number(d.lon).toFixed(4)}`;
+      document.getElementById('mapsLink').href = `https://www.google.com/maps?q=${d.lat},${d.lon}`;
+    }
+    document.getElementById('mapLabel').textContent = d.city || 'Location pinned';
+    document.getElementById('resultSection').classList.remove('hidden');
+
+    const entry = { ip: d.ip || ip, loc: `${d.city || '—'}, ${d.country || '—'}`, flag: countryFlag };
+    history = history.filter(h => h.ip !== entry.ip);
+    history.unshift(entry);
+    history = history.slice(0, 6);
+    localStorage.setItem('msa_ip_history', JSON.stringify(history));
+    renderHistory();
+  } catch(e){
+    err.textContent = 'Could not look up that IP. Please check it and try again.';
+    err.classList.remove('hidden');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Look up';
+}
+
+function clearHistory(){
+  history = [];
+  localStorage.removeItem('msa_ip_history');
+  renderHistory();
+}
+
+function renderHistory(){
+  const section = document.getElementById('historySection');
+  const list = document.getElementById('historyList');
+  if(!history.length){ section.classList.add('hidden'); return; }
+  section.classList.remove('hidden');
+  list.innerHTML = history.map(h => `
+    <div class="history-item" onclick="document.getElementById('ipInput').value='${h.ip}';lookup()">
+      <div class="h-flag">${h.flag || '🌐'}</div>
+      <div class="h-ip">${h.ip}</div>
+      <div class="h-loc">${h.loc}</div>
+    </div>
+  `).join('');
+}
+
+document.getElementById('ipInput').addEventListener('keydown', e => { if(e.key === 'Enter') lookup(); });
+getMyIp();
+renderHistory();
+</script>
+</body>
+</html>

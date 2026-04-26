@@ -1,0 +1,18 @@
+/* variables */
+:root {
+  --navy:#0f172a;
+  --off:#f8f6f1;
+  --accent:#c9a96e;
+}
+
+/* reset */
+* {
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+/* typography */
+body {
+  font-family:'DM Sans', sans-serif;
+}
